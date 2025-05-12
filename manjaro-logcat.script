@@ -1,0 +1,147 @@
+// Manjaro LogCat Plymouth Theme
+// Uses throbber animation and LogCat functionality
+
+// Configuration
+NUM_SCROLL_LINES = 215;    // Number of log lines to show
+LINE_WIDTH = 280;          // Maximum width of each line
+
+// Animation settings 
+THROBBER_FRAMES = 61;     // Total number of throbber frames (1-61)
+
+// broken: Screen setup
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+
+throbber_counter = 0;
+
+
+logo_image = Image("animation-0001.png");  
+logo_sprite = Sprite(logo_image);
+logo_sprite.SetPosition(screen_width / 2 - logo_image.GetWidth() / 2, 
+                      screen_height * 0.25 - logo_image.GetHeight() / 2, 10);
+
+// Set up throbber animation
+throbber_image = Image("throbber-0001.png");
+throbber_sprite = Sprite(throbber_image);
+throbber_sprite.SetPosition(screen_width / 2 - throbber_image.GetWidth() / 2, 
+                          screen_height * 0.4, 20);
+
+// broken: Set up watermark
+watermark_image = Image("watermark.png");
+if (watermark_image) {
+    watermark_sprite = Sprite(watermark_image);
+    watermark_sprite.SetPosition(screen_width / 2 - watermark_image.GetWidth() / 2, 
+                               screen_height * 0.95 - watermark_image.GetHeight() / 2, 1);
+}
+
+// Initialize log message arrays and sprites
+lines = [];
+message_sprite = [];
+
+// Untested: Logcat correct message coloring
+for (i = 0; i < NUM_SCROLL_LINES; i++) {
+    lines[i] = Image.Text("", 1, 1, 1);  // White text (1,1,1)
+    message_sprite[i] = Sprite();
+    message_sprite[i].SetPosition(screen_width * 0.05, 
+                                (i * 15), 100);
+}
+
+
+fun StringLength(string) {
+    index = 0;
+    str = String(string);
+    while (str.CharAt(index)) index++;
+    return index;
+}
+
+// Untested: Logcat correct message coloring
+// Function to determine text color based on log content
+fun GetMessageColor(text) {
+    if (text.IndexOf("error") >= 0 || text.IndexOf("fail") >= 0 || 
+        text.IndexOf("ERROR") >= 0 || text.IndexOf("FAIL") >= 0) {
+        return [1, 0.3, 0.3];  // Red for errors
+    } 
+    else if (text.IndexOf("warning") >= 0 || text.IndexOf("warn") >= 0 || 
+             text.IndexOf("WARNING") >= 0 || text.IndexOf("WARN") >= 0) {
+        return [1, 0.8, 0];    // Orange/yellow for warnings
+    }
+    else if (text.IndexOf("info") >= 0 || text.IndexOf("INFO") >= 0) {
+        return [0.4, 0.8, 1];  // Light blue for info
+    }
+    else {
+        return [0.8, 0.8, 0.8]; // Light gray for regular messages
+    }
+}
+
+// Function to get frame number with padding
+fun GetFrameFilename(prefix, frame_number) {
+    frame_str = String(frame_number);
+    
+    while (StringLength(frame_str) < 4) {
+        frame_str = "0" + frame_str;
+    }
+    
+    return prefix + frame_str + ".png";
+}
+
+// Status update callback for boot messages
+fun scroll_message_callback(text) {
+    // Truncate message if too long
+    if (StringLength(text) > LINE_WIDTH) {
+        text = text.SubString(0, LINE_WIDTH - 3);
+        text += "...";
+    }
+
+    // Get color based on message content
+    color = GetMessageColor(text);
+    
+    // Shift messages down (bottom to top)
+    for (i = NUM_SCROLL_LINES - 1; i > 0; i--) {
+        lines[i] = lines[i-1];
+    }
+
+    // Add new message at the top
+    lines[0] = Image.Text(text, color[0], color[1], color[2]);
+
+    // Update all message sprites
+    for (i = 0; i < NUM_SCROLL_LINES; i++) {
+        message_sprite[i].SetImage(lines[i]);
+    }
+}
+
+// Progress callback
+fun progress_callback(duration, progress) {
+    // Empty but needed as Plymouth expects it
+}
+
+// Animation timer callback
+fun refresh_callback() {
+    // Increment throbber counter
+    throbber_counter++;
+    if (throbber_counter >= THROBBER_FRAMES) {
+        throbber_counter = 0;
+    }
+    
+    // Load and set the next throbber frame
+    frame_number = throbber_counter + 1;  // Frames start at 1
+    throbber_filename = GetFrameFilename("throbber-", frame_number);
+    new_image = Image(throbber_filename);
+    
+    // Update sprite with new frame
+    if (new_image) {
+        throbber_sprite.SetImage(new_image);
+    }
+}
+
+// Register callbacks
+Plymouth.SetUpdateStatusFunction(scroll_message_callback);
+Plymouth.SetBootProgressFunction(progress_callback);
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// Show initial message
+message = "Starting Manjaro Linux...";
+scroll_message_callback(message);

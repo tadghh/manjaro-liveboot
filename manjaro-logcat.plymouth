@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Manjaro LogCat
+Description=Manjaro theme with LogCat-style messages
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/manjaro-logcat
+ScriptFile=/usr/share/plymouth/themes/manjaro-logcat/manjaro-logcat.script
