@@ -1,3 +1,7 @@
+## Where
+Make a new folder at `/usr/share/plymouth/themes/`
+
+
 ## Setup
 
 Create hooks
@@ -32,3 +36,15 @@ build() {
 #### Add
 HOOKS=(...plymouth plymouth-log ...)
 
+### Assign it
+
+```
+## list all
+plymouth-set-default-theme --list
+plymouth-set-default-theme "folder_name"
+```
+
+### Bugs
+- looks like dog ass
+- Logo doesnt show on irl boot
+- Throbber missing on irl boot
